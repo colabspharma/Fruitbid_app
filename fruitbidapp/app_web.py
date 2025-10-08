@@ -1,5 +1,5 @@
 # =====================================================
-# 🍎 app_web.py — Main FruitBid App Entry Point (fixed)
+# 🍎 app_web.py — Main FruitBid App Entry Point (cleaned)
 # =====================================================
 
 import os
@@ -23,81 +23,78 @@ if "page_configured" not in st.session_state:
     except st.errors.StreamlitAPIException:
         pass
 
-
 # =====================================================
-# 🍉 BACKGROUND (CSS injected into Streamlit root)
+# 🎨 GLOBAL STYLING (CSS)
 # =====================================================
 st.markdown(
     """
     <style>
-    /* apply soft green gradient to Streamlit app root */
+    /* App background */
     .stApp {
         background: linear-gradient(180deg, #f3fff3, #d6ffd6);
         min-height: 100vh;
         overflow: hidden;
     }
 
-    /* keep normal content above visuals */
+    /* Ensure Streamlit content floats above visuals */
     .main > div {
         background: transparent !important;
     }
 
-    /* button / input styling kept consistent with theme */
+    /* Buttons */
     div.stButton > button {
-      background: linear-gradient(90deg, #26a69a, #80cbc4);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      padding: 0.6rem 1.2rem;
-      font-weight: 600;
-      transition: all 0.3s ease-in-out;
-      box-shadow: 0px 3px 10px rgba(38, 166, 154, 0.4);
+        background: linear-gradient(90deg, #26a69a, #80cbc4);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 0.6rem 1.2rem;
+        font-weight: 600;
+        transition: all 0.3s ease-in-out;
+        box-shadow: 0px 3px 10px rgba(38, 166, 154, 0.4);
     }
     div.stButton > button:hover {
-      background: linear-gradient(90deg, #00796b, #4db6ac);
-      transform: translateY(-2px);
-      box-shadow: 0px 6px 12px rgba(0, 121, 107, 0.3);
+        background: linear-gradient(90deg, #00796b, #4db6ac);
+        transform: translateY(-2px);
+        box-shadow: 0px 6px 12px rgba(0, 121, 107, 0.3);
     }
 
+    /* Inputs */
     input, textarea, select {
-      border-radius: 8px !important;
-      border: 1px solid #b2dfdb !important;
-      background-color: #ffffff !important;
-      color: #004d40 !important;
+        border-radius: 8px !important;
+        border: 1px solid #b2dfdb !important;
+        background-color: #ffffff !important;
+        color: #004d40 !important;
     }
     input:focus, textarea:focus, select:focus {
-      border: 1px solid #26a69a !important;
-      box-shadow: 0 0 0 3px rgba(38, 166, 154, 0.2) !important;
-      outline: none !important;
+        border: 1px solid #26a69a !important;
+        box-shadow: 0 0 0 3px rgba(38, 166, 154, 0.2) !important;
+        outline: none !important;
     }
 
+    /* Headings */
     h2, h3 {
-      color: #00695c !important;
-      font-weight: 700 !important;
+        color: #00695c !important;
+        font-weight: 700 !important;
     }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-
 # =====================================================
-# 🍉 Floating fruits animation (runs in an invisible iframe)
+# 🍉 FLOATING FRUITS ANIMATION (via HTML iframe)
 # =====================================================
-# This uses components.html() with height=0 so JS executes reliably.
 components.html(
     """
-    <!doctype html>
     <html>
-      <head>
+    <head>
         <meta charset="utf-8" />
         <style>
-          /* minimal styles inside iframe - fruits spawn and remove themselves */
-          body { margin:0; padding:0; overflow: hidden; background: transparent; }
+          body { margin:0; padding:0; overflow:hidden; background:transparent; }
           .fruit {
             position: fixed;
             bottom: -10vh;
-            font-size: 2.2rem;
+            font-size: 2rem;
             opacity: 0.9;
             animation: floatUp linear infinite;
             user-select: none;
@@ -110,8 +107,8 @@ components.html(
             100% { transform: translateY(-110vh) translateX(-3vw) rotate(-10deg); opacity: 0; }
           }
         </style>
-      </head>
-      <body>
+    </head>
+    <body>
         <div id="__fruit_root"></div>
         <script>
           (function() {
@@ -123,27 +120,23 @@ components.html(
               el.className = "fruit";
               el.textContent = fruits[Math.floor(Math.random() * fruits.length)];
               el.style.left = (Math.random() * 100) + "vw";
-              el.style.fontSize = (1.3 + Math.random() * 1.4) + "rem";
+              el.style.fontSize = (1.2 + Math.random() * 1.6) + "rem";
               el.style.animationDuration = (7 + Math.random() * 6) + "s";
               el.style.animationDelay = (Math.random() * 2) + "s";
               root.appendChild(el);
-              setTimeout(() => {
-                try { root.removeChild(el); } catch (e) {}
-              }, 15000);
+              setTimeout(() => { try { root.removeChild(el); } catch(e) {} }, 15000);
             }
 
-            // initial burst then periodic spawn
             for (let i = 0; i < 16; i++) spawnFruit();
             setInterval(spawnFruit, 1200);
           })();
         </script>
-      </body>
+    </body>
     </html>
     """,
     height=0,
     width=0,
 )
-
 
 # =====================================================
 # 📂 SIDEBAR (import or fallback)
@@ -159,14 +152,15 @@ except ModuleNotFoundError:
             )
     st.warning("⚠️ Sidebar missing — using fallback menu.")
 
-
 # =====================================================
-# 🗄️ DATABASE HELPERS
+# 🗄️ DATABASE
 # =====================================================
-DB_PATH = os.path.join("/app", "fruitbid.db")
+if os.environ.get("STREAMLIT_RUNTIME") == "true":
+    DB_PATH = os.path.join("/app", "fruitbid.db")
+else:
+    DB_PATH = os.path.join(os.path.dirname(__file__), "fruitbid.db")
 
 def get_connection():
-    """Return a sqlite3 connection (threads allowed)."""
     return sqlite3.connect(DB_PATH, check_same_thread=False)
 
 def init_db():
@@ -202,16 +196,10 @@ def init_db():
     conn.close()
 
 def seed_data():
-    """Seed demo lots only when table is empty."""
     conn = get_connection()
     c = conn.cursor()
-    try:
-        c.execute("SELECT COUNT(*) FROM lots")
-        count = c.fetchone()[0]
-    except sqlite3.OperationalError:
-        # If schema not present, create it and treat as empty
-        count = 0
-
+    c.execute("SELECT COUNT(*) FROM lots")
+    count = c.fetchone()[0]
     if count == 0:
         st.info("🌱 Seeding sample fruit lots...")
         sample_lots = [
@@ -220,14 +208,11 @@ def seed_data():
             ("Mangoes", "150 kg", 180.0, datetime.now().strftime("%Y-%m-%d")),
             ("Oranges", "180 kg", 90.0, datetime.now().strftime("%Y-%m-%d")),
         ]
-        try:
-            c.executemany(
-                "INSERT INTO lots (item_name, quantity, base_price, date_added) VALUES (?, ?, ?, ?)",
-                sample_lots
-            )
-            conn.commit()
-        except sqlite3.OperationalError as e:
-            st.error(f"❌ Database insert failed: {e}")
+        c.executemany(
+            "INSERT INTO lots (item_name, quantity, base_price, date_added) VALUES (?, ?, ?, ?)",
+            sample_lots
+        )
+        conn.commit()
     conn.close()
 
 def execute_query(query, params=()):
@@ -244,24 +229,9 @@ def fetch_all(query, params=()):
     rows = c.fetchall()
     conn.close()
     return rows
-import os
-import sqlite3
 
 # =====================================================
-# 🗄️ DATABASE PATH (Works on both local + Streamlit Cloud)
-# =====================================================
-if os.environ.get("STREAMLIT_RUNTIME") == "true":
-    # Streamlit Cloud environment
-    DB_PATH = os.path.join("/app", "fruitbid.db")
-else:
-    # Local environment (Mac / Windows / Linux)
-    DB_PATH = os.path.join(os.path.dirname(__file__), "fruitbid.db")
-
-def get_connection():
-    return sqlite3.connect(DB_PATH, check_same_thread=False)
-
-# =====================================================
-# 🌐 MAIN APP FUNCTION
+# 🌐 MAIN APP
 # =====================================================
 def main():
     init_db()
@@ -270,9 +240,7 @@ def main():
     st.title("🍎 FruitBid — Fresh Produce, Fast Deals")
     selected_page = render_sidebar()
 
-    # --------------------------
-    # 🏠 HOME
-    # --------------------------
+    # -------------------------- HOME --------------------------
     if selected_page == "🏠 Home":
         st.subheader("👋 Welcome to FruitBid")
         st.info("OTP login temporarily disabled for testing.")
@@ -281,21 +249,17 @@ def main():
         phone = st.text_input("Phone Number (optional)")
 
         if st.button("Enter Marketplace"):
-            if not name or not name.strip():
+            if not name.strip():
                 st.warning("Please enter your name.")
             else:
                 st.session_state["user_name"] = name.strip()
                 st.session_state["phone"] = phone.strip()
                 st.success(f"Welcome, {name.strip()}! Use the sidebar to explore the Marketplace.")
 
-    # --------------------------
-    # 🏪 MARKETPLACE
-    # --------------------------
+    # ----------------------- MARKETPLACE -----------------------
     elif selected_page == "🏪 Marketplace":
         st.subheader("🏪 Marketplace — Active Lots")
-        lots = fetch_all(
-            "SELECT id, item_name, quantity, base_price, date_added FROM lots ORDER BY id DESC"
-        )
+        lots = fetch_all("SELECT id, item_name, quantity, base_price, date_added FROM lots ORDER BY id DESC")
 
         if not lots:
             st.warning("No lots available yet.")
@@ -326,9 +290,7 @@ def main():
                         for user, amount, ts in top_bids:
                             st.write(f"• {user} — ₹{amount} ({ts})")
 
-    # --------------------------
-    # 💼 MY BIDS
-    # --------------------------
+    # -------------------------- MY BIDS ------------------------
     elif selected_page == "💼 My Bids":
         st.subheader("💼 My Bids")
         user_name = st.session_state.get("user_name")
@@ -351,9 +313,7 @@ def main():
                 for item, amount, ts in my_bids:
                     st.write(f"🍇 {item} — ₹{amount} at {ts}")
 
-    # --------------------------
-    # ⚙️ ADMIN
-    # --------------------------
+    # --------------------------- ADMIN -------------------------
     elif selected_page == "⚙️ Add Lot (Admin)":
         st.subheader("⚙️ Admin: Add a New Lot")
         item_name = st.text_input("Fruit Name")
@@ -370,13 +330,11 @@ def main():
             else:
                 st.warning("Please fill in all fields.")
 
-
 # =====================================================
 # 🚀 RUN
 # =====================================================
 if __name__ == "__main__":
     main()
-
 
 # =====================================================
 # 🍎 FOOTER
