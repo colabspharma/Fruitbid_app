@@ -34,3 +34,11 @@ tornado==6.5.2
 typing_extensions==4.15.0
 tzdata==2025.2
 urllib3==2.5.0
+
+# --- Add these for Supabase + Twilio ---
+supabase==2.4.0
+gotrue==2.6.0
+storage3==0.7.0
+postgrest==0.15.0
+realtime==2.1.0
+twilio==9.3.4

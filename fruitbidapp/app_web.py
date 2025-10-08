@@ -1,5 +1,5 @@
 # =====================================================
-# 🍎 app_web.py — Main FruitBid App Entry Point (cleaned)
+# 🍎 app_web.py — Main FruitBid App Entry Point (fixed)
 # =====================================================
 
 import os
@@ -7,6 +7,24 @@ import sqlite3
 from datetime import datetime
 import streamlit as st
 import streamlit.components.v1 as components
+from supabase import create_client
+
+# ==============================
+# 🌐 Supabase Connection (fixed)
+# ==============================
+try:
+    st.write("🔍 Supabase URL:", st.secrets["supabase"]["url"])
+    st.write("🔑 Key prefix:", st.secrets["supabase"]["anon_key"][:8] + "...")
+except Exception as e:
+    st.error("❌ Could not load Supabase secrets. Check .streamlit/secrets.toml file.")
+    st.stop()
+
+# Load credentials from Streamlit secrets
+supabase_url = st.secrets["supabase"]["url"]
+supabase_key = st.secrets["supabase"]["anon_key"]
+
+# Initialize Supabase client
+supabase = create_client(supabase_url, supabase_key)
 
 # =====================================================
 # ✅ PAGE CONFIG
@@ -82,61 +100,40 @@ st.markdown(
 )
 
 # =====================================================
-# 🍉 FLOATING FRUITS ANIMATION (via HTML iframe)
+# 🍎 Animated Fruit Background (Safari-Safe)
 # =====================================================
-components.html(
-    """
-    <html>
-    <head>
-        <meta charset="utf-8" />
-        <style>
-          body { margin:0; padding:0; overflow:hidden; background:transparent; }
-          .fruit {
-            position: fixed;
-            bottom: -10vh;
-            font-size: 2rem;
-            opacity: 0.9;
-            animation: floatUp linear infinite;
-            user-select: none;
-            pointer-events: none;
-            z-index: 0;
-          }
-          @keyframes floatUp {
-            0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0.9; }
-            50% { transform: translateY(-50vh) translateX(3vw) rotate(10deg); opacity: 1; }
-            100% { transform: translateY(-110vh) translateX(-3vw) rotate(-10deg); opacity: 0; }
-          }
-        </style>
-    </head>
-    <body>
-        <div id="__fruit_root"></div>
-        <script>
-          (function() {
-            const fruits = ["🍎","🍊","🍋","🍇","🍌","🍉","🍒","🍓","🍍","🥭"];
-            const root = document.getElementById("__fruit_root");
-
-            function spawnFruit() {
-              const el = document.createElement("div");
-              el.className = "fruit";
-              el.textContent = fruits[Math.floor(Math.random() * fruits.length)];
-              el.style.left = (Math.random() * 100) + "vw";
-              el.style.fontSize = (1.2 + Math.random() * 1.6) + "rem";
-              el.style.animationDuration = (7 + Math.random() * 6) + "s";
-              el.style.animationDelay = (Math.random() * 2) + "s";
-              root.appendChild(el);
-              setTimeout(() => { try { root.removeChild(el); } catch(e) {} }, 15000);
-            }
-
-            for (let i = 0; i < 16; i++) spawnFruit();
-            setInterval(spawnFruit, 1200);
-          })();
-        </script>
-    </body>
-    </html>
-    """,
-    height=0,
-    width=0,
-)
+fruit_css = """
+<style>
+body {
+  background: linear-gradient(135deg, #fff8e1, #fff);
+  overflow: hidden;
+}
+@keyframes float {
+  0% { transform: translateY(110vh) rotate(0deg); opacity: 0.9; }
+  100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+}
+.fruit {
+  position: fixed;
+  bottom: -60px;
+  font-size: 2.5rem;
+  animation: float linear infinite;
+  z-index: 0;
+}
+.fruit:nth-child(1) { left: 10%; animation-duration: 9s; animation-delay: 0s; }
+.fruit:nth-child(2) { left: 25%; animation-duration: 12s; animation-delay: 2s; }
+.fruit:nth-child(3) { left: 40%; animation-duration: 10s; animation-delay: 4s; }
+.fruit:nth-child(4) { left: 55%; animation-duration: 11s; animation-delay: 1s; }
+.fruit:nth-child(5) { left: 70%; animation-duration: 13s; animation-delay: 3s; }
+.fruit:nth-child(6) { left: 85%; animation-duration: 8s;  animation-delay: 5s; }
+</style>
+<div class="fruit">🍎</div>
+<div class="fruit">🍊</div>
+<div class="fruit">🍇</div>
+<div class="fruit">🍉</div>
+<div class="fruit">🍓</div>
+<div class="fruit">🍍</div>
+"""
+st.markdown(fruit_css, unsafe_allow_html=True)
 
 # =====================================================
 # 📂 SIDEBAR (import or fallback)
@@ -240,7 +237,6 @@ def main():
     st.title("🍎 FruitBid — Fresh Produce, Fast Deals")
     selected_page = render_sidebar()
 
-    # -------------------------- HOME --------------------------
     if selected_page == "🏠 Home":
         st.subheader("👋 Welcome to FruitBid")
         st.info("OTP login temporarily disabled for testing.")
@@ -256,7 +252,6 @@ def main():
                 st.session_state["phone"] = phone.strip()
                 st.success(f"Welcome, {name.strip()}! Use the sidebar to explore the Marketplace.")
 
-    # ----------------------- MARKETPLACE -----------------------
     elif selected_page == "🏪 Marketplace":
         st.subheader("🏪 Marketplace — Active Lots")
         lots = fetch_all("SELECT id, item_name, quantity, base_price, date_added FROM lots ORDER BY id DESC")
@@ -290,7 +285,6 @@ def main():
                         for user, amount, ts in top_bids:
                             st.write(f"• {user} — ₹{amount} ({ts})")
 
-    # -------------------------- MY BIDS ------------------------
     elif selected_page == "💼 My Bids":
         st.subheader("💼 My Bids")
         user_name = st.session_state.get("user_name")
@@ -313,7 +307,6 @@ def main():
                 for item, amount, ts in my_bids:
                     st.write(f"🍇 {item} — ₹{amount} at {ts}")
 
-    # --------------------------- ADMIN -------------------------
     elif selected_page == "⚙️ Add Lot (Admin)":
         st.subheader("⚙️ Admin: Add a New Lot")
         item_name = st.text_input("Fruit Name")
