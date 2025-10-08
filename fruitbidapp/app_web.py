@@ -336,7 +336,6 @@ st.markdown(
     """
     <hr style='margin-top:2rem; opacity:0.3;'>
     <p style='text-align:center; color:#00695c; font-size:0.9rem;'>
-    Built with ❤️ using Streamlit — <b>FruitBid App</b>
     </p>
     """,
     unsafe_allow_html=True,
