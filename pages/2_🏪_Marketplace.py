@@ -160,7 +160,7 @@ def fetch_lots():
 # =====================================================
 seed_sample_lots()
 lots = fetch_lots()
-
+import time
 if lots:
     st.subheader("📦 Available Fruit Lots")
 
@@ -170,8 +170,9 @@ if lots:
             st.write(f"📦 **Quantity:** {quantity} kg")
             st.write(f"💰 **Base Price:** ₹{base_price}/kg")
             st.write(f"📅 **Date Added:** {date_added}")
-            st.button(f"💰 Place Bid on {fruit}", key=f"bid_{idx}")
+            st.button(f"💰 Place Bid on {fruit}", key=f"bid_{idx}_{int(time.time())}")
             st.markdown("---")
+            
 else:
     st.info("No fruit lots available yet. Please add some from the ⚙️ Admin Add Lot page.")
 
