@@ -69,6 +69,23 @@ def fetch_lots():
         st.error(f"Database error: {e}")
         return []
 
+# =====================================================
+# 📦 Display Available Lots
+# =====================================================
+lots = fetch_lots()
+
+if lots:
+    st.subheader("📦 Available Fruit Lots")
+
+    for idx, (fruit, quantity, base_price) in enumerate(lots, start=1):
+        with st.container():
+            st.markdown(f"### 🍎 {fruit}")
+            st.write(f"📦 **Quantity:** {quantity} kg")
+            st.write(f"💰 **Base Price:** ₹{base_price}/kg")
+
+            # Placeholder for bidding action
+            st.button(f"💰 Place Bid on {fruit}", key=f"bid_{idx}")
+            st.markdown("---")
 else:
     st.info("No fruit lots available yet. Please add some from the ⚙️ Admin Add Lot page.")
 
